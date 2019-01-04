@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html style="height: 100%">
+   <head>
+       <meta charset="utf-8">
+   </head>
+   <body style="height: 100%; margin: 0">
+       
+       <div style="width: 100%;height:100%;display: flex;text-align: center;justify-content: center;">
+         <div id="container" style="width: 910px;">
+             
+         </div>  
+       </div>
+       <script type="text/javascript" src="js/data.js"></script>
+       <script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts/echarts.min.js"></script>
+       <script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts-gl/echarts-gl.min.js"></script>
+       <script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts-stat/ecStat.min.js"></script>
+       <script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts/extension/dataTool.min.js"></script>
+       <script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts/map/js/china.js"></script>
+       <script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts/map/js/world.js"></script>
+       <script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/echarts/extension/bmap.min.js"></script>
+       <script type="text/javascript" src="http://echarts.baidu.com/gallery/vendors/simplex.js"></script>
+       <script type="text/javascript">
+           function tenToHex(num){
+                if(num > 255 || num < 0){
+                    return "ff";
+                }
+                var a = num % 16;
+                var b = (num - a) / 16;
+                var convert = [
+                "0","1","2","3",
+                "4","5","6","7",
+                "8","9","a","b",
+                "c","d","e","f",
+                ];
+                return convert[b] + convert[a];
+           }
+           function hexToTen(hex){
+                hex = hex + "";
+                if(hex.length != 2){
+                    return 255;
+                }
+                var convert = {
+                    "0":0,"1":1,"2":2,"3":3,
+                    "4":4,"5":5,"6":6,"7":7,
+                    "8":8,"9":9,"a":10,"b":11,
+                    "c":12,"d":13,"e":14,"f":15,
+                };
+                return convert[hex[0]] * 16 + convert[hex[1]];
+           }
+       </script>
+       <script type="text/javascript">
+
+var dom = document.getElementById("container");
+var myChart = echarts.init(dom);
+var app = {};
+option = null;
+
+var indices = {
+    name: 0,
+    group: 1,
+    id: 5
+};
+var schema = [
+    {name: 'name', index: 0},
+    {name: 'group', index: 1},
+    {name: 'R', index: 2},
+    {name: 'B', index: 3},
+    {name: 'G', index: 4},
+    {name: 'id', index: 5}
+];
+var fieldIndices = schema.reduce(function (obj, item) {
+    obj[item.name] = item.index;
+    return obj;
+}, {});
+
+var groupCategories = [];
+var groupColors = [];
+var data;
+var fieldNames = schema.map(function (item) {
+    return item.name;
+});
+fieldNames = fieldNames.slice(2, fieldNames.length - 2);
+
+function getMaxOnExtent(data) {
+    var colorMax = -Infinity;
+    var symbolSizeMax = -Infinity;
+    for (var i = 0; i < data.length; i++) {
+        var item = data[i];
+        var colorVal = item[fieldIndices[config.color]];
+        var symbolSizeVal = item[fieldIndices[config.symbolSize]];
+        colorMax = Math.max(colorVal, colorMax);
+        symbolSizeMax = Math.max(symbolSizeVal, symbolSizeMax);
+    }
+    return {
+        color: colorMax,
+        symbolSize: symbolSizeMax
+    };
+}
+
+
+var config = app.config = {
+    xAxis3D: 'R',
+    yAxis3D: 'G',
+    zAxis3D: 'B',
+    color: 'G',
+    symbolSize: 'protein',
+
+    onChange: function () {
+        var max = getMaxOnExtent(data);
+        if (data) {
+            myChart.setOption({
+                xAxis3D: {
+                    name: config.xAxis3D
+                },
+                yAxis3D: {
+                    name: config.yAxis3D
+                },
+                zAxis3D: {
+                    name: config.zAxis3D
+                },
+                series: {
+                    
+                    data: data.map(function (item, idx) {
+                        return [
+                            item[fieldIndices[config.xAxis3D]],
+                            item[fieldIndices[config.yAxis3D]],
+                            item[fieldIndices[config.zAxis3D]],
+                            idx
+                        ];
+                    })
+                }
+            });
+        }
+    }
+};
+app.configParameters = {};
+['xAxis3D', 'yAxis3D', 'zAxis3D', 'color', 'symbolSize'].forEach(function (fieldName) {
+    app.configParameters[fieldName] = {
+        options: fieldNames
+    };
+});
+
+    data = jsondata;
+
+
+    var colordatas = data.map(function (item, idx) {
+                return [
+                    hexToTen(item[fieldIndices[config.xAxis3D]]),
+                    hexToTen(item[fieldIndices[config.zAxis3D]]),
+                    hexToTen(item[fieldIndices[config.yAxis3D]]),
+                ];
+            });
+
+    var max = getMaxOnExtent(data);
+    myChart.setOption({
+        backgroundcolor:"rgba(50,50,50,0)",
+        tooltip: {},
+        xAxis3D: {
+            name: config.xAxis3D,
+            type: 'value'
+        },
+        yAxis3D: {
+            name: config.yAxis3D,
+            type: 'value'
+        },
+        zAxis3D: {
+            name: config.zAxis3D,
+            type: 'value'
+        },
+        grid3D: {
+            axisLine: {
+                lineStyle: {
+                    color: '#000'
+                }
+            },
+            axisPointer: {
+                lineStyle: {
+                    color: '#ffbd67'
+                }
+            },
+            viewControl: {
+                // autoRotate: true
+                // projection: 'orthographic'
+            }
+        },
+        series: [{
+            type: 'scatter3D',
+            name: "name",
+            data: data.map(function (item, idx) {
+                return [
+                    hexToTen(item[fieldIndices[config.xAxis3D]]),
+                    hexToTen(item[fieldIndices[config.yAxis3D]]),
+                    hexToTen(item[fieldIndices[config.zAxis3D]]),
+                    item[0]
+                ];
+            }),
+            symbolSize: 12,
+            // symbol: 'triangle',
+            itemStyle: {
+                shadowColor:'blue',
+                borderWidth: 1,
+                borderColor: '#000',
+                normal: {
+                    color: function(params){
+                        var colordata = params.data;
+                        var color = 'rgb(' + colordata[0] + ',' + colordata[2] + ',' + colordata[1] + ')';
+                        return color;
+                    }
+                }
+            },
+            tooltip:{
+                formatter:'{b}'
+            },
+            emphasis: {
+                itemStyle: {
+                    color: '#000'
+                }
+            }
+        }]
+    });
+if (option && typeof option === "object") {
+    myChart.setOption(option, true);
+}
+       </script>
+       
+   </body>
+</html>
